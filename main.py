@@ -1,81 +1,83 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import sqlite3
+"""Ponto de entrada da aplicação FastAPI."""
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
-app = FastAPI()
+from app.config.settings import settings
+from app.database import init_db
+from app.routes.tasks import router as tasks_router
 
-class Task(BaseModel):
-    title: str
-    description: str | None = None
-    completed: bool = False
 
-def get_db_connection():
-    conn = sqlite3.connect('tasks.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+def create_application() -> FastAPI:
+    """Cria e configura a instância principal da aplicação FastAPI."""
+    app = FastAPI(
+        title=settings.APP_NAME,
+        description=(
+            "API RESTful para gerenciamento de tarefas. "
+            "Permite criar, listar, atualizar e remover tarefas de forma eficiente."
+        ),
+        version="1.0.0",
+    )
 
-@app.on_event("startup")
-def startup_event():
-    conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT,
-            completed BOOLEAN NOT NULL DEFAULT FALSE
+    # Registrar rotas
+    app.include_router(tasks_router)
+
+    # Inicializar banco de dados na startup
+    @app.on_event("startup")
+    def on_startup():
+        init_db()
+
+    # Tratamento global de erros de validação
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ):
+        errors = []
+        for error in exc.errors():
+            loc = " -> ".join(str(loc) for loc in error["loc"])
+            errors.append(
+                {
+                    "campo": loc.replace("body -> ", ""),
+                    "mensagem": error["msg"],
+                    "tipo": error["type"],
+                }
+            )
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={
+                "detail": "Erro de validação nos dados enviados.",
+                "erros": errors,
+            },
         )
-    ''')
-    conn.commit()
-    conn.close()
 
-@app.post("/tasks/", status_code=201)
-def create_task(task: Task):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO tasks (title, description, completed) VALUES (?, ?, ?)",
-                   (task.title, task.description, task.completed))
-    conn.commit()
-    new_task_id = cursor.lastrowid
-    conn.close()
-    return {"id": new_task_id, **task.dict()}
+    # Tratamento global de erros genéricos
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception):
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "detail": "Ocorreu um erro interno no servidor.",
+                "mensagem": "Por favor, tente novamente mais tarde.",
+            },
+        )
 
-@app.get("/tasks/")
-def read_tasks():
-    conn = get_db_connection()
-    tasks = conn.execute("SELECT * FROM tasks").fetchall()
-    conn.close()
-    return [dict(task) for task in tasks]
+    # Endpoints auxiliares
+    @app.get("/", tags=["Geral"])
+    def root():
+        """Endpoint raiz com informações da API."""
+        return {
+            "mensagem": f"Bem-vindo à {settings.APP_NAME}",
+            "documentacao": "/docs",
+            "versao": "1.0.0",
+        }
 
-@app.get("/tasks/{task_id}")
-def read_task(task_id: int):
-    conn = get_db_connection()
-    task = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
-    conn.close()
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return dict(task)
+    @app.get("/health", tags=["Geral"])
+    def health_check():
+        """Endpoint de verificação de saúde da API."""
+        return {"status": "healthy"}
 
-@app.put("/tasks/{task_id}")
-def update_task(task_id: int, task: Task):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE tasks SET title = ?, description = ?, completed = ? WHERE id = ?",
-                   (task.title, task.description, task.completed, task_id))
-    conn.commit()
-    if cursor.rowcount == 0:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Task not found")
-    conn.close()
-    return {"id": task_id, **task.dict()}
+    return app
 
-@app.delete("/tasks/{task_id}", status_code=204)
-def delete_task(task_id: int):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
-    conn.commit()
-    if cursor.rowcount == 0:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Task not found")
-    conn.close()
-    return {"message": "Task deleted successfully"}
+
+# Instância global para execução direta com uvicorn
+app = create_application()

@@ -1,0 +1,60 @@
+# ============================================================
+# .gitignore - API de Gerenciamento de Tarefas
+# ============================================================
+
+# Ambiente virtual
+venv/
+.venv/
+env/
+ENV/
+
+# Byte-compiled / compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Banco de dados (SQLite)
+tasks.db
+*.db
+*.sqlite
+
+# Variáveis de ambiente (contém dados sensíveis)
+.env
+
+# Configurações do editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Configurações de testes
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Distribuição / pacotes
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Logs
+*.log
+logs/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Ambiente Docker
+.env.docker
+
+# Temporários
+tmp/
+temp/
+*.tmp
