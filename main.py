@@ -19,15 +19,12 @@ def create_application() -> FastAPI:
         version="1.0.0",
     )
 
-    # Registrar rotas
     app.include_router(tasks_router)
 
-    # Inicializar banco de dados na startup
     @app.on_event("startup")
     def on_startup():
         init_db()
 
-    # Tratamento global de erros de validação
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
@@ -50,7 +47,6 @@ def create_application() -> FastAPI:
             },
         )
 
-    # Tratamento global de erros genéricos
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception):
         return JSONResponse(
@@ -61,7 +57,6 @@ def create_application() -> FastAPI:
             },
         )
 
-    # Endpoints auxiliares
     @app.get("/", tags=["Geral"])
     def root():
         """Endpoint raiz com informações da API."""
@@ -79,5 +74,4 @@ def create_application() -> FastAPI:
     return app
 
 
-# Instância global para execução direta com uvicorn
 app = create_application()
