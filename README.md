@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Testes](https://img.shields.io/badge/Testes-21%20passando-green.svg)](tests/)
+[![Testes](https://github.com/GustavoHCGit/api-gerenciamento-tarefas/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/GustavoHCGit/api-gerenciamento-tarefas/actions/workflows/tests.yml)
 
 Uma API RESTful moderna para gerenciamento de tarefas, desenvolvida com **FastAPI** e **Python**. Este projeto demonstra boas práticas de desenvolvimento backend, incluindo arquitetura em camadas, validação de dados com Pydantic, persistência com SQLite, testes automatizados e tratamento robusto de erros.
 
