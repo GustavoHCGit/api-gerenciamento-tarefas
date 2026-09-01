@@ -111,13 +111,27 @@ pip install -r requirements.txt
 
 ### 3. Configuração de Variáveis de Ambiente
 
+O repositório inclui o ficheiro `.env.example` apenas como modelo. Ele documenta as variáveis necessárias, mas não deve conter palavras-passe, tokens, chaves privadas ou outros valores reais.
+
 ```bash
-# Copiar o modelo de configuração
+# Copiar o modelo de configuração para um ficheiro local ignorado pelo Git
 cp .env.example .env
 
-# Editar o arquivo .env conforme necessário
-# Valores padrão já funcionam para desenvolvimento local
+# Editar o ficheiro .env conforme necessário
+# Os valores padrão funcionam para desenvolvimento local
 ```
+
+O ficheiro `.env` é ignorado pelo Git, assim como outras variantes `.env.*`. Os ficheiros de exemplo permanecem permitidos para que a configuração esperada continue documentada. Antes de fazer um commit, confirme que nenhum ficheiro com credenciais reais aparece em `git status`.
+
+```bash
+# Verificar ficheiros preparados para commit
+git status --short
+
+# Confirmar que o .env não está a ser rastreado
+git check-ignore -v .env
+```
+
+Se uma credencial tiver sido exposta ou já tiver sido enviada para o GitHub, ela deve ser revogada e substituída no fornecedor correspondente; apagar o ficheiro num commit posterior não elimina o valor do histórico.
 
 ### 4. Iniciar o Servidor
 
@@ -158,6 +172,7 @@ curl http://localhost:8000/tasks/
 ```
 
 **Resposta:**
+
 ```json
 [
   {
@@ -237,7 +252,7 @@ A documentação inclui exemplos de schemas, modelos de dados e permite testar o
 - **Separação de responsabilidades**: Código organizado em camadas (rotas, modelos, schemas, configuração).
 - **Validação de dados**: Uso de Pydantic para validar entradas com regras claras.
 - **Tratamento de erros**: Respostas HTTP padronizadas com mensagens descritivas.
-- **Variáveis de ambiente**: Configurações sensíveis centralizadas no arquivo `.env`.
+- **Variáveis de ambiente**: Configurações locais centralizadas no `.env`, com `.env.example` seguro e ficheiros sensíveis protegidos pelo `.gitignore`.
 - **Testes automatizados**: Cobertura completa dos endpoints com pytest e TestClient.
 - **Documentação automática**: Swagger UI e ReDoc gerados automaticamente pelo FastAPI.
 
